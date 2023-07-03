@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type='importmap'>
+      {
+        "imports": {
+          "@fullcalendar/core": "https://cdn.skypack.dev/@fullcalendar/core@6.1.8",
+          "@fullcalendar/daygrid": "https://cdn.skypack.dev/@fullcalendar/daygrid@6.1.8",
+          "@js-temporal/polyfill": "https://cdn.skypack.dev/@js-temporal/polyfill@0.4.4"
+        }
+      }
+    </script>
+    <script type='module'>
+      import { Calendar } from '@fullcalendar/core'
+      import { Temporal } from '@js-temporal/polyfill'
+      import dayGridPlugin from '@fullcalendar/daygrid'
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar')
+        const calendar = new Calendar(calendarEl, {
+          events: (info, scb) => {
+            fetch("http://localhost:8007/all/")
+              .then(res => res.json())
+              .then(data => {
+                const events = data.events.map(event => {
+                  const start = Temporal.ZonedDateTime.from(event.start).toPlainDateTime().toString();
+                  const end = Temporal.ZonedDateTime.from(event.end).toPlainDateTime().toString();
+                  return {id: event.uid, title: event.summary, start, end}
+                })
+                console.log(events)
+                scb(Array.from(events))
+              })
+          },
+          plugins: [dayGridPlugin],
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+          }
+        })
+        calendar.render()
+      })
+    </script>
+  </head>
+  <body>
+    <div id='calendar'></div>
+  </body>
+</html>
